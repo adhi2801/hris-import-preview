@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head><title>HRIS Import Preview</title></head>
+<body>
+    <h1>HRIS Import Preview</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if fatal_error %}
+        <p style="color:red;">Could not process file: {{ fatal_error }}</p>
+    {% endif %}
+
+    {% if result %}
+        <h2>Summary</h2>
+        <ul>
+            <li>Total source rows: {{ result.total_rows }}</li>
+            <li>Accepted employees: {{ result.accepted|length }}</li>
+            <li>Errors: {{ result.errors|length }}</li>
+            <li>Root employees (no manager): {{ result.roots|length }}</li>
+            <li>Employees in a reporting cycle: {{ result.cyclic_ids|length }}</li>
+        </ul>
+
+        <h2>Errors</h2>
+        <ul>
+        {% for error in result.errors %}
+            <li>{% if error.row %}Row {{ error.row }}: {% endif %}{{ error.message }}</li>
+        {% endfor %}
+        </ul>
+
+        <h2>Root Employees</h2>
+        <ul>
+        {% for emp_id in result.roots %}
+            <li>{{ emp_id }}</li>
+        {% endfor %}
+        </ul>
+
+        <h2>Managers and Direct Report Counts</h2>
+        <ul>
+        {% for manager_id, count in result.manager_counts.items %}
+            <li>{{ manager_id }}: {{ count }} direct report{{ count|pluralize }}</li>
+        {% endfor %}
+        </ul>
+
+        <h2>Employees in a Reporting Cycle</h2>
+        <ul>
+        {% for emp_id in result.cyclic_ids %}
+            <li>{{ emp_id }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
